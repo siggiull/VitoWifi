@@ -166,8 +166,8 @@ void OptolinkKW::_receiveHandler() {
     _state = IDLE;
     _action = RETURN;
     _lastMillis = millis();
-    _errorCode = 0;  // succes
-    _logger.println(F("succes"));
+    _errorCode = 0;  // success
+    _logger.println(F("success"));
     return;
   } else if (millis() - _lastMillis > 1 * 1000UL) {  // Vitotronic isn't answering, try again
     _rcvBufferLen = 0;
