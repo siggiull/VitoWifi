@@ -157,7 +157,8 @@ void OptolinkKW::_sendHandler() {
 }
 
 void OptolinkKW::_receiveHandler() {
-  while (_stream->available() > 0) {  // while instead of if: read complete RX buffer
+  if (_stream->available() > 0) {  //if instead of while: avoid possible blocking the loop()'s
+    _lastMillis = millis();
     _rcvBuffer[_rcvBufferLen] = _stream->read();
     ++_rcvBufferLen;
   }
