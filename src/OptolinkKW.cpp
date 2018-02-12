@@ -102,7 +102,7 @@ void OptolinkKW::_idleHandler() {
     } else {
       _logger.println("something wrong received");
     }
-  } else if (_action == PROCESS && (millis() - _lastMillis < 10UL)) {  // don't wait for 0x05 sync signal, send directly after last request
+  } else if (_action == PROCESS && (millis() - _lastMillis < 200UL)) {  // don't wait for 0x05 sync signal, send directly after last request
     _state = SEND;
     _sendHandler();
   } else if (millis() - _lastMillis > 10 * 1000UL) {
@@ -168,7 +168,7 @@ void OptolinkKW::_receiveHandler() {
     _errorCode = 0;  // succes
     _logger.println(F("succes"));
     return;
-  } else if (millis() - _lastMillis > 10 * 1000UL) {  // Vitotronic isn't answering, try again
+  } else if (millis() - _lastMillis > 1 * 1000UL) {  // Vitotronic isn't answering, try again
     _rcvBufferLen = 0;
     _errorCode = 1;  // Connection error
     memset(_rcvBuffer, 0, 4);
