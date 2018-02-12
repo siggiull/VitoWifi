@@ -212,6 +212,8 @@ void VitoWifiInterface<OptolinkP300>::loop() {
 template <>
 void VitoWifiInterface<OptolinkKW>::loop() {
   _optolink.loop();
+  uint8_t static firstReadValue[4] = { 0 };
+  bool static firstRead = true;
   if (!_queue.empty() && !_optolink.isBusy()) {
     if (_queue.front().write) {
       _optolink.writeToDP(_queue.front().DP->getAddress(), _queue.front().DP->getLength(), _queue.front().value);
@@ -226,9 +228,21 @@ void VitoWifiInterface<OptolinkKW>::loop() {
     _logger.println(F(" action successful"));
     uint8_t value[4] = {0};
     _optolink.read(value);
-    _queue.front().DP->callback(value);
-    _queue.pop();
-    return;
+    if (firstRead) { // read/write DP first time-->store value to compare
+      firstRead = false;
+      memcpy(firstReadValue, value, 4);
+    } else { // read/write DP second time-->compare highest byte, should always be the same 
+      uint8_t length = _queue.front().DP->getLength();
+      if (value[length - 1] == firstReadValue[length - 1]) {
+        _queue.front().DP->callback(value);        
+        _logger.println(F("Value double checked->OK!"));        
+      } else {
+        _logger.println(F("Value double checked->FAILED!"));
+      }
+      _queue.pop();
+      firstRead = true;
+      return;
+    }
   }
   if (_optolink.available() < 0) {  // display error message and remove element from queue
     _logger.print(F("Datapoint "));
@@ -237,7 +251,7 @@ void VitoWifiInterface<OptolinkKW>::loop() {
     uint8_t errorCode = _optolink.readError();
     _logger.println(errorCode, DEC);
     _queue.pop();
-    return;
+    firstRead = true;    
   }
 }
 
