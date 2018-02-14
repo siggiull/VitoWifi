@@ -157,10 +157,11 @@ void OptolinkKW::_sendHandler() {
 }
 
 void OptolinkKW::_receiveHandler() {
-  if (_stream->available() > 0) {  //if instead of while: avoid possible blocking the loop()'s
+  while (_stream->available() > 0) {  // while instead of if: read complete RX buffer
     _lastMillis = millis();
     _rcvBuffer[_rcvBufferLen] = _stream->read();
     ++_rcvBufferLen;
+    if (_rcvBufferLen == _rcvLen) break; //stop reading if message is complete
   }
   if (_rcvBufferLen == _rcvLen) {  // message complete, check message
     _state = IDLE;
@@ -169,7 +170,7 @@ void OptolinkKW::_receiveHandler() {
     _errorCode = 0;  // success
     _logger.println(F("success"));
     return;
-  } else if (millis() - _lastMillis > 1 * 1000UL) {  // Vitotronic isn't answering, try again
+  } else if (millis() - _lastMillis > 2 * 1000UL) {  // Vitotronic isn't answering, try again
     _rcvBufferLen = 0;
     _errorCode = 1;  // Connection error
     memset(_rcvBuffer, 0, 4);
