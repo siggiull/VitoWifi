@@ -223,9 +223,9 @@ void VitoWifiInterface<OptolinkKW>::loop() {
     return;
   }
   if (_optolink.available() > 0) {  // trigger callback when ready and remove element from queue
-    _logger.print(F("Datapoint "));
+    /*_logger.print(F("Datapoint "));
     _logger.print(_queue.front().DP->getName());
-    _logger.println(F(" action successful"));
+    _logger.println(F(" action successful"));*/
     uint8_t value[4] = {0};
     _optolink.read(value);
     if (firstRead) { // read/write DP first time-->store value to compare

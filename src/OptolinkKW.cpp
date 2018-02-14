@@ -58,7 +58,7 @@ void OptolinkKW::begin(HardwareSerial* serial) {
 #endif
 
 void OptolinkKW::loop() {
-  if (_numberOfTries < 1) {
+  if (/*_numberOfTries < 1*/false) {
     _state = IDLE;
     _action = RETURN_ERROR;
   } else if (_state == INIT) {
@@ -91,10 +91,9 @@ void OptolinkKW::_initHandler() {
 
 // idle state, waiting for sync from Vito
 void OptolinkKW::_idleHandler() {
-  if (_stream->available()) {
+  if (_stream->available()) {    
     if (_stream->read() == 0x05) {
-      _lastMillis = millis();
-      _logger.println("0x05 received");
+      //_logger.print("0x05 received;");
       if (_action == PROCESS) {
         _state = SYNC;
         _syncHandler();
@@ -102,10 +101,10 @@ void OptolinkKW::_idleHandler() {
     } else {
       _logger.println("something wrong received");
     }
-  } else if (_action == PROCESS && (millis() - _lastMillis < 200UL)) {  // don't wait for 0x05 sync signal, send directly after last request
+  } else if (_action == PROCESS && (millis() - _lastMillis < 300UL)) {  // don't wait for 0x05 sync signal, send directly after last request
     _state = SEND;
     _sendHandler();
-  } else if (millis() - _lastMillis > 10 * 1000UL) {
+  } else if (millis() - _lastMillis > 5 * 1000UL) {
     _state = IDLE;
     _errorCode = 1;
     --_numberOfTries;
@@ -115,6 +114,7 @@ void OptolinkKW::_idleHandler() {
 void OptolinkKW::_syncHandler() {
   const uint8_t buff[1] = {0x01};
   _stream->write(buff, 1);
+  _lastMillis = millis();
   _state = SEND;
   _sendHandler();
 }
@@ -145,15 +145,7 @@ void OptolinkKW::_sendHandler() {
   _clearInputBuffer();
   _rcvBufferLen = 0;
   --_numberOfTries;
-  _state = RECEIVE;
-  if (_writeMessageType)
-    _logger.print(F("WRITE "));
-  else
-    _logger.print(F("READ"));
-  _logger.print(F(" request on address "));
-  _printHex(&_logger, &buff[1], 2);
-  _logger.print(F(", length "));
-  _logger.println(_length);
+  _state = RECEIVE;  
 }
 
 void OptolinkKW::_receiveHandler() {
@@ -165,12 +157,10 @@ void OptolinkKW::_receiveHandler() {
   }
   if (_rcvBufferLen == _rcvLen) {  // message complete, check message
     _state = IDLE;
-    _action = RETURN;
-    _lastMillis = millis();
+    _action = RETURN;    
     _errorCode = 0;  // success
-    _logger.println(F("success"));
     return;
-  } else if (millis() - _lastMillis > 2 * 1000UL) {  // Vitotronic isn't answering, try again
+  } else if (millis() - _lastMillis > 1 * 1000UL) {  // Vitotronic isn't answering, try again
     _rcvBufferLen = 0;
     _errorCode = 1;  // Connection error
     memset(_rcvBuffer, 0, 4);
